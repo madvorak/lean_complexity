@@ -17,6 +17,15 @@ def nat_cmp: program ℕ :=
   instruction.clear [source.imm 1]
 ]
 
+def char_cmp: program char :=
+[ -- 1 a [1 b _]
+  instruction.binary_op (λ a b, ite (a < b) 'a' 'b') [] [source.imm 'a'] [source.imm 'b', source.imm 'a'],
+  -- (a≥b) null [1 b _]
+  instruction.clear [source.imm 'a'],
+  -- (a≥b) null null
+  instruction.clear [source.imm 'b']
+]
+
 instance : complexity.has_encoding (runtime_model ℕ) ℕ := ⟨ ⟨ bank.null.setv, begin
   intros x y,
   rw [bank.equiv_iff],
@@ -34,11 +43,13 @@ def decode_list: bank ℕ → list ℕ
 def mk_list: list ℕ → bank ℕ := complexity.encode (runtime_model ℕ)
 def push_list: list ℕ → bank ℕ → bank ℕ := λ xs, push_arg (mk_list xs)
 
-def test: list (frame ℕ) := ((stack.step^[1000]) ((merge_sort nat_cmp).apply (push_list [9, 3, 6, 5, 2] bank.null))).val
+def twenty : list ℕ := [13, 4, 20, 10, 9, 14, 1, 2, 17, 11, 15, 7, 5, 8, 12, 18, 3, 6, 16, 19]
+
+def test: list (frame ℕ) := ((stack.step^[3500]) ((merge_sort nat_cmp).apply (push_list twenty bank.null))).val
 
 #eval (list.length test) -- 1
 #eval list.length (frame.current (list.ilast test)) -- 0
-#eval decode_list (frame.register (list.ilast test)) -- [2, 3, 5, 6, 9]
+#eval decode_list (frame.register (list.ilast test)) -- [1..20]
 
 end encoding
 end membank
